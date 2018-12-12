@@ -2,30 +2,104 @@ package com.raywenderlich.knockknock
 
 import android.app.Activity
 import android.os.Bundle
+import android.util.Log
+import com.google.android.things.pio.Gpio
+import com.google.android.things.pio.GpioCallback
+import com.google.android.things.pio.PeripheralManager
+import com.google.firebase.database.*
+import com.raywenderlich.knockknock.data.repository.RingRepository
+import com.raywenderlich.knockknock.data.repository.RingRepositoryImpl
+import io.reactivex.disposables.CompositeDisposable
+import java.io.IOException
 
-/**
- * Skeleton of an Android Things activity.
- *
- * Android Things peripheral APIs are accessible through the class
- * PeripheralManagerService. For example, the snippet below will open a GPIO pin and
- * set it to HIGH:
- *
- * <pre>{@code
- * val service = PeripheralManagerService()
- * val mLedGpio = service.openGpio("BCM6")
- * mLedGpio.setDirection(Gpio.DIRECTION_OUT_INITIALLY_LOW)
- * mLedGpio.value = true
- * }</pre>
- * <p>
- * For more complex peripherals, look for an existing user-space driver, or implement one if none
- * is available.
- *
- * @see <a href="https://github.com/androidthings/contrib-drivers#readme">https://github.com/androidthings/contrib-drivers#readme</a>
- *
- */
 class MainActivity : Activity() {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+  companion object {
+    private const val TAG = "MainActivity"
+    private const val BUTTON_PIN_NAME = "BCM21"
+    private const val RED_LED_PIN_NAME = "BCM6"
+  }
+
+  private val disposables = CompositeDisposable()
+
+  private var buttonGpio: Gpio? = null
+  private var ledGpio: Gpio? = null
+
+  private lateinit var ringRepository: RingRepository
+
+  private val gpioCallback = GpioCallback {
+    try {
+      val butttonValue = it.value
+      ledGpio?.value = butttonValue
+    } catch (exception: IOException) {
+      handleError(exception)
     }
+    true
+  }
+
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+
+    initialize()
+
+    val peripheralManager = PeripheralManager.getInstance()
+    Log.d(TAG, "Available GPIO: ${peripheralManager.gpioList}")
+
+    try {
+      buttonGpio = peripheralManager.openGpio(BUTTON_PIN_NAME)
+      buttonGpio?.apply {
+        setDirection(Gpio.DIRECTION_IN)
+        setEdgeTriggerType(Gpio.EDGE_BOTH)
+        setActiveType(Gpio.ACTIVE_LOW)
+        registerGpioCallback(gpioCallback)
+      }
+
+      ledGpio = peripheralManager.openGpio(RED_LED_PIN_NAME)
+      ledGpio?.apply {
+        setDirection(Gpio.DIRECTION_OUT_INITIALLY_LOW)
+      }
+    } catch (exception: IOException) {
+      handleError(exception)
+    }
+  }
+
+  private fun initialize() {
+    ringRepository = RingRepositoryImpl()
+
+    disposables.add(
+        ringRepository.listenForRingResponseEvents()
+            .subscribe { onRingResponseReceived(it) }
+    )
+
+    ringRepository.saveRingEvent()
+  }
+
+  private fun onRingResponseReceived(dataSnapshot: DataSnapshot) {
+    Log.d(TAG, "DATA changed")
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+
+    buttonGpio?.apply {
+      unregisterGpioCallback(gpioCallback)
+      try {
+        close()
+      } catch (exception: IOException) {
+        handleError(exception)
+      }
+    }
+
+    ledGpio?.apply {
+      try {
+        close()
+      } catch (exception: IOException) {
+        handleError(exception)
+      }
+    }
+  }
+
+  private fun handleError(throwable: Throwable) {
+    //Do nothing
+  }
 }
