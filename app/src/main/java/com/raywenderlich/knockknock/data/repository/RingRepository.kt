@@ -22,12 +22,13 @@
 
 package com.raywenderlich.knockknock.data.repository
 
-import com.google.firebase.database.DataSnapshot
-import io.reactivex.Observable
+import com.raywenderlich.knockknock.data.database.DatabaseWrapper
 
-interface RingRepository {
+class RingRepository {
 
-  fun listenForRingResponseEvents(): Observable<DataSnapshot>
+  private val databaseWrapper by lazy { DatabaseWrapper() }
 
-  fun saveRingEvent()
+  fun listenForRingResponseEvents() = databaseWrapper.onDatabaseValuesChanged()
+
+  fun saveRingEvent() = databaseWrapper.saveRingEvent()
 }

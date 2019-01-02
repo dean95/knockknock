@@ -22,24 +22,20 @@
 
 package com.raywenderlich.knockknock
 
-import android.app.Activity
+import android.arch.lifecycle.Observer
 import android.os.Bundle
 import android.os.Handler
-import com.google.firebase.database.*
+import android.support.v7.app.AppCompatActivity
+import com.google.firebase.database.DataSnapshot
 import com.raywenderlich.knockknock.board.BoardManager
-import com.raywenderlich.knockknock.board.BoardManagerImpl
-import com.raywenderlich.knockknock.board.BoardManagerImpl.RingEvent
+import com.raywenderlich.knockknock.board.BoardManager.RingEvent
 import com.raywenderlich.knockknock.data.repository.RingRepository
-import com.raywenderlich.knockknock.data.repository.RingRepositoryImpl
-import io.reactivex.disposables.CompositeDisposable
 
-class MainActivity : Activity() {
+class MainActivity : AppCompatActivity() {
 
   companion object {
     private const val LIGHT_OFF_DELAY_MILLIS = 3000L
   }
-
-  private val disposables = CompositeDisposable()
 
   private lateinit var ringRepository: RingRepository
   private lateinit var boardManager: BoardManager
@@ -55,28 +51,31 @@ class MainActivity : Activity() {
   }
 
   private fun initialize() {
-    ringRepository = RingRepositoryImpl()
-    boardManager = BoardManagerImpl()
+    ringRepository = RingRepository()
+    boardManager = BoardManager()
 
     boardManager.initialize()
 
-    disposables.addAll(
-        boardManager
-            .listenForRingEvents()
-            .subscribe(this::onRingEvent),
-        ringRepository
-            .listenForRingResponseEvents()
-            .subscribe(this::onRingResponseReceived)
-    )
+    boardManager
+        .listenForRingEvents()
+        .observe(this, Observer { ringEvent ->
+          onRingEvent(ringEvent)
+        })
+
+    ringRepository
+        .listenForRingResponseEvents()
+        .observe(this, Observer { dataSnapshot ->
+          onRingResponseReceived(dataSnapshot)
+        })
   }
 
-  private fun onRingResponseReceived(dataSnapshot: DataSnapshot) {
-    val unlockDoor = dataSnapshot.value as Boolean
+  private fun onRingResponseReceived(dataSnapshot: DataSnapshot?) {
+    val unlockDoor = dataSnapshot?.value as Boolean
     if (unlockDoor) boardManager.turnGreenLedLightOn() else boardManager.turnRedLedLightOn()
     turnLightsOffAfterDelay()
   }
 
-  private fun onRingEvent(ringEvent: RingEvent) = ringRepository.saveRingEvent()
+  private fun onRingEvent(ringEvent: RingEvent?) = ringRepository.saveRingEvent()
 
   private fun turnLightsOffAfterDelay() {
     Handler().postDelayed({
