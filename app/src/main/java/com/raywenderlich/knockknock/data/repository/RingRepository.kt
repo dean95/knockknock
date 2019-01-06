@@ -22,13 +22,4 @@
 
 package com.raywenderlich.knockknock.data.repository
 
-import com.raywenderlich.knockknock.data.database.DatabaseWrapper
-
-class RingRepository {
-
-  private val databaseWrapper by lazy { DatabaseWrapper() }
-
-  fun listenForRingResponseEvents() = databaseWrapper.onDatabaseValuesChanged()
-
-  fun saveRingEvent() = databaseWrapper.saveRingEvent()
-}
+class RingRepository
