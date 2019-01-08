@@ -24,6 +24,7 @@ package com.raywenderlich.knockknock
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import com.raywenderlich.knockknock.data.repository.RingRepository
 
 class MainActivity : AppCompatActivity() {
 
@@ -31,6 +32,8 @@ class MainActivity : AppCompatActivity() {
       const val TAG = "MainActivity"
   }
 
+  private lateinit var ringRepository: RingRepository
+  
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     initialize()
