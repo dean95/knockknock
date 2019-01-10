@@ -22,16 +22,69 @@
 
 package com.raywenderlich.knockknock
 
+import android.arch.lifecycle.Observer
 import android.os.Bundle
+import android.os.Handler
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
+import com.google.firebase.database.DataSnapshot
+import com.raywenderlich.knockknock.board.BoardManager
+import com.raywenderlich.knockknock.data.repository.RingRepository
 
 class MainActivity : AppCompatActivity() {
+
+  companion object {
+    const val TAG = "MainActivity"
+    private const val LIGHT_OFF_DELAY_MILLIS = 3000L
+  }
+
+  private lateinit var boardManager: BoardManager
+  private lateinit var ringRepository: RingRepository
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     initialize()
+    Log.d(TAG, "Available GPIO: " + boardManager.listPeripherals())
   }
 
   private fun initialize() {
+    boardManager = BoardManager()
+    ringRepository = RingRepository()
+    boardManager.initialize()
+
+    boardManager
+        .listenForRingEvents()
+        .observe(this, Observer { ringEvent ->
+          onRingEvent(ringEvent)
+        })
+
+    ringRepository
+        .listenForRingResponseEvents()
+        .observe(this, Observer { dataSnapshot ->
+          onRingResponseReceived(dataSnapshot)
+        })
+  }
+
+  private fun onRingResponseReceived(dataSnapshot: DataSnapshot?) {
+    //1
+    val unlockDoor = dataSnapshot?.value as Boolean
+    //2
+    if (unlockDoor) boardManager.turnGreenLedLightOn() else boardManager.turnRedLedLightOn()
+    //3
+    turnLightsOffAfterDelay()
+  }
+
+  private fun onRingEvent(ringEvent: BoardManager.RingEvent?) = ringRepository.saveRingEvent()
+
+  private fun turnLightsOffAfterDelay() {
+    Handler().postDelayed({
+      boardManager.turnGreenLedLightOff()
+      boardManager.turnRedLedLightOff()
+    }, LIGHT_OFF_DELAY_MILLIS)
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+    boardManager.clear()
   }
 }
