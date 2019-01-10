@@ -26,9 +26,9 @@ import com.raywenderlich.knockknock.data.database.DatabaseWrapper
 
 class RingRepository {
 
-    private val databaseWrapper by lazy { DatabaseWrapper() }
+  private val databaseWrapper by lazy { DatabaseWrapper() }
 
-    fun listenForRingResponseEvents() = databaseWrapper.onDatabaseValuesChanged()
+  fun listenForRingResponseEvents() = databaseWrapper.onDatabaseValuesChanged()
 
-    fun saveRingEvent() = databaseWrapper.saveRingEvent()
+  fun saveRingEvent() = databaseWrapper.saveRingEvent()
 }

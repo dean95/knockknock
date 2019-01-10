@@ -29,16 +29,18 @@ import com.raywenderlich.knockknock.data.repository.RingRepository
 class MainActivity : AppCompatActivity() {
 
   companion object {
-      const val TAG = "MainActivity"
+    const val TAG = "MainActivity"
+    private const val LIGHT_OFF_DELAY_MILLIS = 3000L
   }
 
   private lateinit var ringRepository: RingRepository
-  
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     initialize()
   }
 
   private fun initialize() {
+    ringRepository = RingRepository()
   }
 }

@@ -32,11 +32,17 @@ class BoardManager {
     private const val BLUE_LED_PIN_NAME = "BCM26"
   }
 
-  //NXP i.MX7D board
-//  companion object {
-//    private const val BUTTON_PIN_NAME = "GPIO6_IO14"
-//    private const val RED_LED_PIN_NAME = "GPIO2_IO02"
-//    private const val GREEN_LED_PIN_NAME = "TODO"
-//    private const val BLUE_LED_PIN_NAME = "TODO"
-//  }
+  // NXP i.MX7D board
+  /*
+  companion object {
+    private const val BUTTON_PIN_NAME = "GPIO6_IO14"
+    private const val RED_LED_PIN_NAME = "GPIO2_IO02"
+    private const val GREEN_LED_PIN_NAME = "TODO"
+    private const val BLUE_LED_PIN_NAME = "TODO"
+  }
+  */
+
+  private fun handleError(throwable: Throwable) {
+    /* Do nothing */
+  }
 }
